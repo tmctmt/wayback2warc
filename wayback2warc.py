@@ -116,7 +116,7 @@ class PooledClient:
 def unordered_map(pool, fn, iterable):
     return (future.result() for future in as_completed(pool.submit(fn, item) for item in iterable))
 
-if __name__ == '__main__':
+def main():
     arg_parser = argparse.ArgumentParser(
         description='WARC exporter for the Wayback Machine',
         epilog=(
@@ -225,3 +225,6 @@ if __name__ == '__main__':
             file.close()
 
     pool.shutdown()
+
+if __name__ == '__main__':
+    main()
