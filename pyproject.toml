@@ -29,4 +29,4 @@ dependencies = [
     "warcio==1.8.1",
 ]
 [project.scripts]
-wayback2warc = "wayback2warc.py"
+wayback2warc = "wayback2warc.py:main"
