@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wayback2warc"
+version = "1.0.0"
+description = "WARC exporter for the Wayback Machine"
+readme = "README.md"
+authors = [
+    { name = "tmctmt", email = "tmctmt@proton.me" },
+]
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Utilities",
+]
+keywords = ["Internet Archive", "Wayback Machine", "WARC"]
+dependencies = [
+    "httpx[socks]==0.28.1",
+    "tqdm==4.67.3",
+    "warcio==1.8.1",
+]
+[project.scripts]
+wayback2warc = "wayback2warc.py"
