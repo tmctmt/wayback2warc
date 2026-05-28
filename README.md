@@ -1,4 +1,6 @@
 # wayback2warc
+![PyPI - Version](https://img.shields.io/pypi/v/wayback2warc)
+
 A CLI tool that exports captures from the Wayback Machine and packs them into WARC files.
 
 ```
