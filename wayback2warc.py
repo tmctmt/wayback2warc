@@ -137,7 +137,7 @@ def main():
     arg_parser.add_argument('-f', '--filter', type=eval,
                             help='filter records based on returned boolean')
     arg_parser.add_argument('-m', '--meta', action='store_true',
-                            help='dump cdx metadata into jsonl file')
+                            help='dump cdx metadata into stdout')
     arg_parser.add_argument('-p', '--proxy',
                             help='url formatted proxy, can be a single value or a file')
     arg_parser.add_argument('-t', '--threads', type=int, default=2,
@@ -177,20 +177,20 @@ def main():
                         continue
                     keys.add(key)
 
-                queue.append(meta)
+                if args.meta:
+                    print(json.dumps(astuple(meta)))
+                else:
+                    queue.append(meta)
 
             progress.set_postfix({'queued': len(queue)})
             progress.update()
             
         del keys
-    
-    queue.sort(key=attrgetter('timestamp'))
 
     if args.meta:
-        with open(f'{args.prefix}meta.jsonl', 'w') as file:
-            for meta in queue:
-                file.write(json.dumps(astuple(meta)) + '\n')
         sys.exit()
+    
+    queue.sort(key=attrgetter('timestamp'))
 
     with tqdm(total=len(queue), desc='downloading captures') as progress:
         file = None

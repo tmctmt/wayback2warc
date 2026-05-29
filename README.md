@@ -15,7 +15,7 @@ options:
   -c, --collapse COLLAPSE
                         dedupe records based on returned key
   -f, --filter FILTER   filter records based on returned boolean
-  -m, --meta            dump cdx metadata into jsonl file
+  -m, --meta            dump cdx metadata into stdout
   -p, --proxy PROXY     url formatted proxy, can be a single value or a file
   -t, --threads THREADS
                         concurrent downloads (default: 2)
