@@ -1,7 +1,8 @@
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, astuple
-from datetime import datetime, timezone
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 from io import BytesIO
 from operator import attrgetter
 import argparse
@@ -108,7 +109,7 @@ class PooledClient:
             original = resp.links['original']['url']
         except KeyError:
             original = url
-        date = datetime.strptime(timestamp, '%Y%m%d%H%M%S').replace(tzinfo=timezone.utc)
+        date = parsedate_to_datetime(resp.headers['memento-datetime'])
         statusline = f'HTTP/1.1 {resp.status_code} {resp.reason_phrase}'
 
         return Capture(original, date, statusline, headers, resp.content)
