@@ -57,3 +57,5 @@ Collapse captures by URL excluding query:
 Filter captures before 2020 and exclude images:
 `--filter 'lambda m: m.timestamp < "2020" and "image/" not in m.mimetype'`
 
+## WARC records
+The generated WARC files use per-record GZIP compression. Request records are not included. Response record payloads are always saved uncompressed with a `Content-Length` header, any `Content-Encoding` or `Transfer-Encoding` headers are stripped. Headers and status-lines are reconstructed on a best-effort basis, but the capitalization and order of headers may differ from the original capture. The HTTP version is always set to HTTP/1.1.
