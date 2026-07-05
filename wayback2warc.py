@@ -186,7 +186,7 @@ def main():
     if args.meta:
         sys.exit()
 
-    queue = sorted(queue, key=attrgetter('urlkey'))
+    queue = sorted(queue, key=attrgetter('timestamp'))
     
     with tqdm(total=len(queue), desc='downloading captures') as pbar:
         file = None
