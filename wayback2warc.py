@@ -17,7 +17,7 @@ from tqdm import tqdm
 from warcio import WARCWriter, StatusAndHeaders
 import httpx
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Capture:
     url: str
     date: datetime
@@ -25,7 +25,7 @@ class Capture:
     headers: list[tuple[str, str]]
     content: bytes
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CaptureMetadata:
     urlkey: str
     timestamp: str
@@ -42,7 +42,7 @@ class PooledClient:
 
     def __init__(self, proxy_list: list[str | None]):
         self.proxy_list = proxy_list
-        self.session_pool = deque()
+        self.session_pool: deque[httpx.Client] = deque()
 
     def request(self, method: str, url: str, retry: int = 1, **kwargs):
         try:
@@ -97,7 +97,7 @@ class PooledClient:
             if header.startswith('x-archive-orig-'):
                 header = header[15:]
             elif header == 'location':
-                value = re.sub(r'^(https?://web\.archive\.org)?/web/\d{14}\w*/', '', value)
+                value = re.sub(r'^(?:https?://web\.archive\.org)?/web/\d{14}\w*/', '', value)
             elif header == 'content-type':
                 pass
             else:
@@ -121,8 +121,7 @@ def main():
     arg_parser = argparse.ArgumentParser(
         description='WARC exporter for the Wayback Machine',
         epilog=(
-            "capture fields: urlkey, timestamp, original, mimetype, statuscode, digest, length\n"
-            "\n"
+            "capture fields: urlkey, timestamp, original, mimetype, statuscode, digest, length\n\n"
             "examples:\n"
             "%(prog)s '*.example.org' --collapse 'lambda m: m.digest'\n"
             "%(prog)s 'twitter.com/elonmusk/status/*' -c 'lambda m: m.urlkey.split(\"?\")[0]' -f 'lambda m: m.timestamp < \"2022\"'"
@@ -147,6 +146,10 @@ def main():
                             help='max size of produced warc files in MB (default: %(default)s)')
     args = arg_parser.parse_args()
 
+    if args.collapse:
+        CaptureMetadata.__eq__ = lambda self, other: args.collapse(self) == args.collapse(other)
+        CaptureMetadata.__hash__ = lambda self: hash(args.collapse(self))
+
     if not args.proxy:
         proxy_list = [None]
     elif os.path.exists(args.proxy):
@@ -158,50 +161,46 @@ def main():
     client = PooledClient(proxy_list)
     pages = client.get_cdx_page_count(args.url)
     pool = ThreadPoolExecutor(max_workers=args.threads)
-    queue: list[CaptureMetadata] = []
+    queue: set[CaptureMetadata] = set()
 
-    with tqdm(total=pages, desc='listing cdx') as progress:
-        keys = set()
-
-        for chunk in unordered_map(pool, lambda page: client.get_cdx_page(args.url, page), range(pages)):
+    with tqdm(total=pages, desc='listing cdx') as pbar:
+        for chunk in unordered_map(
+            pool,
+            lambda page: client.get_cdx_page(args.url, page),
+            range(pages)
+        ):
             for meta in chunk:
+                if meta in queue:
+                    continue
+                if args.filter and not args.filter(meta):
+                    continue
                 if int(meta.length) > 1024**2 * 100:
                     print(f'skipping large file: web.archive.org/web/{meta.timestamp}/{meta.original}', file=sys.stderr)
                     continue
-
-                if args.filter and not args.filter(meta):
-                    continue
-
-                if args.collapse:
-                    key = args.collapse(meta)
-                    if key in keys:
-                        continue
-                    keys.add(key)
-
                 if args.meta:
-                    print(json.dumps(astuple(meta)))
-                else:
-                    queue.append(meta)
-
-            progress.set_postfix({'queued': len(queue)})
-            progress.update()
-            
-        del keys
+                    pbar.write(json.dumps(astuple(meta)))
+                queue.add(meta)
+            pbar.set_postfix({'queued': len(queue)})
+            pbar.update()
 
     if args.meta:
         sys.exit()
-    
-    queue.sort(key=attrgetter('timestamp'))
 
-    with tqdm(total=len(queue), desc='downloading captures') as progress:
+    queue = sorted(queue, key=attrgetter('urlkey'))
+    
+    with tqdm(total=len(queue), desc='downloading captures') as pbar:
         file = None
         skipped = 0
 
-        for capture in unordered_map(pool, lambda meta: client.get_capture(meta.original, meta.timestamp), queue):
+        for capture in unordered_map(
+            pool,
+            lambda meta: client.get_capture(meta.original, meta.timestamp),
+            queue
+        ):
             if not capture:
                 skipped += 1
-                progress.set_postfix({'skipped': skipped})
-                progress.update()
+                pbar.set_postfix({'skipped': skipped})
+                pbar.update()
                 continue
             
             if not file or file.tell() > 1024**2 * args.warc_size:
@@ -220,7 +219,7 @@ def main():
             deterministic_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f'{capture.url}|{capture.date.isoformat()}')
             record.rec_headers.replace_header('WARC-Record-ID', f'<urn:uuid:{deterministic_uuid}>')
             writer.write_record(record)
-            progress.update()
+            pbar.update()
 
         if file:
             file.close()
