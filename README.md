@@ -55,7 +55,7 @@ Download all pages but only a yearly capture of each:
 `wayback2warc "example.org/*" --collapse "lambda m: (m.urlkey, m.timestamp[:4])"`
 
 ## Filtering and collapsing
-This tool reimplements filtering and collapsing functionality on the client instead of relying on the [CDX server](https://github.com/internetarchive/wayback/tree/master/wayback-cdx-server#filtering). This comes at the expense of memory, but as an advantage it allows for much more granular queries that can filter records across multiple CDX pages.
+This tool reimplements filtering and collapsing functionality on the client instead of relying on the [CDX server](https://github.com/internetarchive/wayback/tree/master/wayback-cdx-server#filtering). This comes at the expense of memory, but as an advantage it allows for much more granular queries that can deduplicate records across multiple CDX pages.
 
 Instead of a query language, standard Python lambda functions are used for filtering and collapsing. A [CaptureMetadata](https://github.com/tmctmt/wayback2warc/blob/main/wayback2warc.py#L28) instance is passed to both functions, and the returned value is used as a key for collapsing, or as a boolean for filtering.
 
