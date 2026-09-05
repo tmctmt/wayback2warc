@@ -115,7 +115,7 @@ class PooledClient:
         return Capture(original, date, statusline, headers, resp.content)
 
 def main():
-    arg_parser = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(
         description='WARC exporter for the Wayback Machine',
         epilog=(
             "capture fields: urlkey, timestamp, original, mimetype, statuscode, digest, length\n\n"
@@ -125,23 +125,23 @@ def main():
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    arg_parser.add_argument('url',
-                            help='*.example.org or example.org/*')
-    arg_parser.add_argument('prefix', nargs='?', default='',
-                            help='output path prefix')
-    arg_parser.add_argument('-c', '--collapse', type=eval,
-                            help='dedupe records based on returned key')
-    arg_parser.add_argument('-f', '--filter', type=eval,
-                            help='filter records based on returned boolean')
-    arg_parser.add_argument('-m', '--meta', action='store_true',
-                            help='dump cdx metadata into stdout')
-    arg_parser.add_argument('-p', '--proxy',
-                            help='url formatted proxy, can be a single value or a file')
-    arg_parser.add_argument('-t', '--threads', type=int, default=2,
-                            help='concurrent downloads (default: %(default)s)')
-    arg_parser.add_argument('-w', '--warc-size', type=int, default=1024,
-                            help='max size of produced warc files in MB (default: %(default)s)')
-    args = arg_parser.parse_args()
+    p.add_argument('url',
+                   help='*.example.org or example.org/*')
+    p.add_argument('prefix', nargs='?', default='',
+                   help='output path prefix')
+    p.add_argument('-c', '--collapse', type=eval,
+                   help='dedupe records based on returned key')
+    p.add_argument('-f', '--filter', type=eval,
+                   help='filter records based on returned boolean')
+    p.add_argument('-m', '--meta', action='store_true',
+                   help='dump cdx metadata into stdout')
+    p.add_argument('-p', '--proxy',
+                   help='url formatted proxy, can be a single value or a file')
+    p.add_argument('-t', '--threads', type=int, default=2,
+                   help='concurrent downloads (default: %(default)s)')
+    p.add_argument('-w', '--warc-size', type=int, default=1024,
+                   help='max size of produced warc files in MB (default: %(default)s)')
+    args = p.parse_args()
 
     if args.collapse:
         CaptureMetadata.__eq__ = lambda self, other: args.collapse(self) == args.collapse(other)
