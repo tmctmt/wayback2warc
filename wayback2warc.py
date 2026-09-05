@@ -237,7 +237,7 @@ def main():
         if file:
             file.close()
 
-    pool.shutdown()
+    pool.terminate()
 
 
 if __name__ == '__main__':
