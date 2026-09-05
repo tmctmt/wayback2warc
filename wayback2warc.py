@@ -52,14 +52,18 @@ class PooledClient:
             session = self.session_pool.popleft()
         except IndexError:
             proxy = random.choice(self.proxy_list)
-            session = httpx.Client(base_url=self.base_url, timeout=self.timeout, proxy=proxy)
+            session = httpx.Client(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                proxy=proxy
+            )
 
         try:
             resp = session.request(method, url, **kwargs)
-            # we're blocked if this header is not present
             # exempt error 400 from retries as the cause is usually url encoding issues on our part
-            assert 'x-app-server' in resp.headers or resp.status_code == 400
-        except:
+            if 'x-app-server' not in resp.headers and resp.status_code != 400:
+                raise httpx.HTTPError('x-app-server header is not present')
+        except httpx.HTTPError:
             session.close()
             if retry > self.max_retries:
                 raise
