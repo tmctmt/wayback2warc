@@ -145,6 +145,12 @@ def main():
                    help='concurrent downloads (default: %(default)s)')
     p.add_argument('-w', '--warc-size', type=int, default=1024,
                    help='max size of produced warc files in MB (default: %(default)s)')
+    p.add_argument('-s', '--page-start', type=int, default=0,
+                   help='include cdx pages starting from this zero-based number (useful for splitting up large websites)')
+    p.add_argument('-e', '--page-end', type=int, default=1e9,
+                   help='include cdx pages up to this number')
+    p.add_argument('-n', '--page-count', action='store_true',
+                   help='print cdx page count and exit')
     args = p.parse_args()
 
     if args.collapse:
@@ -160,14 +166,22 @@ def main():
         proxy_list = [args.proxy]
 
     client = PooledClient(proxy_list)
-    pages = client.get_cdx_page_count(args.url)
     pool = ThreadPool(args.threads)
     queue: set[CaptureMetadata] = set()
+    
+    pages = client.get_cdx_page_count(args.url)
 
-    with tqdm(total=pages, desc='listing cdx') as pbar:
+    if args.page_count:
+        print(pages)
+        sys.exit()
+
+    start = min(args.page_start, pages)
+    end = min(args.page_end, pages)
+
+    with tqdm(total=end - start, desc='listing cdx') as pbar:
         for chunk in pool.imap_unordered(
             lambda page: client.get_cdx_page(args.url, page),
-            range(pages)
+            range(start, end)
         ):
             for meta in chunk:
                 if meta in queue:
