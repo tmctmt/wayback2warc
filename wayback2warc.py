@@ -118,10 +118,10 @@ def main():
     p = argparse.ArgumentParser(
         description='WARC exporter for the Wayback Machine',
         epilog=(
-            "capture fields: urlkey, timestamp, original, mimetype, statuscode, digest, length\n\n"
-            "examples:\n"
-            "%(prog)s '*.example.org' --collapse 'lambda m: m.digest'\n"
-            "%(prog)s 'twitter.com/elonmusk/status/*' -c 'lambda m: m.urlkey.split(\"?\")[0]' -f 'lambda m: m.timestamp < \"2022\"'"
+            f'CaptureMetadata fields: {", ".join(CaptureMetadata.__annotations__)}\n\n'
+            'Example usage:\n'
+            '%(prog)s "*.example.org" --collapse "lambda m: m.digest"\n'
+            '%(prog)s "twitter.com/elonmusk/status/*" --filter "lambda m: m.timestamp < \'2022\'"'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
