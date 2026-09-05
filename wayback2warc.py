@@ -188,7 +188,7 @@ def main():
                     continue
                 if args.filter and not args.filter(meta):
                     continue
-                if int(meta.length) > 1024**2 * 100:
+                if meta.length != '-' and int(meta.length) > 1024**2 * 100:
                     print(f'skipping large file: web.archive.org/web/{meta.timestamp}/{meta.original}', file=sys.stderr)
                     continue
                 if args.meta:
