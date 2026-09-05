@@ -148,7 +148,7 @@ def main():
     p.add_argument('-s', '--page-start', type=int, default=0,
                    help='include cdx pages starting from this zero-based number (useful for splitting up large websites)')
     p.add_argument('-e', '--page-end', type=int, default=1e9,
-                   help='include cdx pages up to this number')
+                   help='include cdx pages up to this number (exclusive)')
     p.add_argument('-n', '--page-count', action='store_true',
                    help='print cdx page count and exit')
     args = p.parse_args()
