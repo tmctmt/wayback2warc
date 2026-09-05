@@ -1,10 +1,3 @@
-from collections import deque
-from multiprocessing.pool import ThreadPool
-from dataclasses import dataclass, astuple
-from datetime import datetime
-from email.utils import parsedate_to_datetime
-from io import BytesIO
-from operator import attrgetter
 import argparse
 import json
 import os.path
@@ -12,10 +5,18 @@ import random
 import re
 import sys
 import uuid
+from collections import deque
+from dataclasses import astuple, dataclass
+from datetime import datetime
+from email.utils import parsedate_to_datetime
+from io import BytesIO
+from multiprocessing.pool import ThreadPool
+from operator import attrgetter
 
-from tqdm import tqdm
-from warcio import WARCWriter, StatusAndHeaders
 import httpx
+from tqdm import tqdm
+from warcio import StatusAndHeaders, WARCWriter
+
 
 @dataclass(frozen=True, slots=True)
 class Capture:
@@ -24,6 +25,7 @@ class Capture:
     statusline: str
     headers: list[tuple[str, str]]
     content: bytes
+
 
 @dataclass(frozen=True, slots=True)
 class CaptureMetadata:
@@ -34,6 +36,7 @@ class CaptureMetadata:
     statuscode: str
     digest: str
     length: str
+
 
 class PooledClient:
     base_url = 'https://web.archive.org'
@@ -113,6 +116,7 @@ class PooledClient:
         statusline = f'HTTP/1.1 {resp.status_code} {resp.reason_phrase}'
 
         return Capture(original, date, statusline, headers, resp.content)
+
 
 def main():
     p = argparse.ArgumentParser(
@@ -220,6 +224,7 @@ def main():
             file.close()
 
     pool.shutdown()
+
 
 if __name__ == '__main__':
     main()
