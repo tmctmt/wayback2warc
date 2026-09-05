@@ -1,5 +1,5 @@
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from multiprocessing.pool import ThreadPool
 from dataclasses import dataclass, astuple
 from datetime import datetime
 from email.utils import parsedate_to_datetime
@@ -114,9 +114,6 @@ class PooledClient:
 
         return Capture(original, date, statusline, headers, resp.content)
 
-def unordered_map(pool, fn, iterable):
-    return (future.result() for future in as_completed(pool.submit(fn, item) for item in iterable))
-
 def main():
     arg_parser = argparse.ArgumentParser(
         description='WARC exporter for the Wayback Machine',
@@ -160,12 +157,11 @@ def main():
 
     client = PooledClient(proxy_list)
     pages = client.get_cdx_page_count(args.url)
-    pool = ThreadPoolExecutor(max_workers=args.threads)
+    pool = ThreadPool(args.threads)
     queue: set[CaptureMetadata] = set()
 
     with tqdm(total=pages, desc='listing cdx') as pbar:
-        for chunk in unordered_map(
-            pool,
+        for chunk in pool.imap_unordered(
             lambda page: client.get_cdx_page(args.url, page),
             range(pages)
         ):
@@ -192,8 +188,7 @@ def main():
         file = None
         skipped = 0
 
-        for capture in unordered_map(
-            pool,
+        for capture in pool.imap_unordered(
             lambda meta: client.get_capture(meta.original, meta.timestamp),
             queue
         ):
